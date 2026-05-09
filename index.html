@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="es" x-data="app()" :class="{ 'dark': dark }" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PocketPlayer — Música en tu Apple Watch, sin iPhone</title>
+  <meta name="description" content="PocketPlayer es la app independiente para Apple Watch que reproduce tu música local sin necesidad de iPhone. Open source y gratuita." />
+  <meta property="og:title"       content="PocketPlayer — Música en tu Apple Watch" />
+  <meta property="og:description" content="Reproduce tu música directamente desde el Apple Watch, sin iPhone. Transfiere canciones desde iCloud o el iPhone con un toque." />
+  <meta property="og:type"        content="website" />
+
+  <!-- Tailwind config MUST be inline, before the CDN script -->
+  <script>
+    tailwind = { config: {
+      darkMode: 'class',
+      theme: { extend: {
+        colors: { neon: '#B2F4FF', ocean: '#00182F', blue: '#1567A8', deep: '#002641' },
+        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+      }},
+    }}
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!--
+    app.js defines app() BEFORE Alpine initialises.
+    Alpine uses defer, so it runs after DOM + after this sync script = app() is always defined.
+  -->
+  <script src="app.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body
+  class="font-sans antialiased transition-colors duration-300"
+  :class="dark ? 'bg-ocean text-gray-100' : 'bg-white text-gray-900'"
+  x-cloak
+>
+
+<!-- ══════════════════════════════════════
+     NAV
+══════════════════════════════════════ -->
+<nav
+  class="fixed top-0 inset-x-0 z-50 transition-all duration-300"
+  :class="dark
+    ? 'bg-ocean/90 border-b border-blue/30 backdrop-blur-md'
+    : 'bg-white/95 border-b border-[#1567A8]/20 backdrop-blur-md shadow-sm'"
+>
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+
+    <!-- Logo -->
+    <a href="#hero" class="flex items-center gap-2">
+      <span class="w-8 h-8 rounded-xl flex items-center justify-center text-lg font-black"
+        :class="dark ? 'bg-neon/10 text-neon neon-text' : 'bg-blue text-white'">▶</span>
+      <span class="font-bold text-base tracking-tight"
+        :class="dark ? 'text-neon neon-text' : 'text-blue'">PocketPlayer</span>
+      <span class="text-xs px-2 py-0.5 rounded-full font-semibold border"
+        :class="dark ? 'bg-neon/10 text-neon border-neon/30' : 'bg-blue/10 text-blue border-blue/30'">Beta</span>
+    </a>
+
+    <!-- Desktop nav links -->
+    <div class="hidden md:flex items-center gap-6 text-sm font-medium">
+      <template x-for="item in navItems" :key="item.href">
+        <a :href="item.href" x-text="item.label"
+          class="transition-colors"
+          :class="dark
+            ? 'text-gray-300 hover:text-neon'
+            : 'text-gray-600 hover:text-[#1567A8]'"></a>
+      </template>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex items-center gap-3">
+      <button @click="toggleLang()"
+        class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all"
+        :class="dark ? 'border-neon/30 text-neon hover:bg-neon/10' : 'border-blue/30 text-blue hover:bg-blue/10'"
+        x-text="lang === 'es' ? '🌐 EN' : '🌐 ES'">
+      </button>
+      <button @click="dark = !dark"
+        class="w-9 h-9 rounded-xl flex items-center justify-center border transition-all"
+        :class="dark
+          ? 'bg-neon/10 border-neon/40 text-neon hover:bg-neon/20'
+          : 'bg-[#1567A8] border-[#1567A8] text-white hover:bg-[#125088]'">
+        <span x-text="dark ? '☀️' : '🌙'" class="text-base leading-none"></span>
+      </button>
+      <a href="https://github.com/albertolicea00/PocketPlayer" target="_blank"
+        class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all neon-btn"
+        :class="dark ? 'border-neon/40 text-neon bg-neon/5' : 'border-blue/40 text-blue bg-blue/5'">
+        <!-- GitHub icon -->
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483
+            0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466
+            -.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832
+            .092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688
+            -.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004
+            1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7
+            1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.92.359.31.678.921.678 1.856 0
+            1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484
+            17.522 2 12 2z"/>
+        </svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     1 · HERO
+══════════════════════════════════════ -->
+<section id="hero"
+  class="min-h-screen flex flex-col items-center justify-center pt-24 pb-16 px-4 text-center relative overflow-hidden"
+  :class="dark ? 'bg-hero-dark' : 'bg-hero-light'"
+>
+  <!-- BG blur blobs -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full opacity-10 blur-3xl"
+      :class="dark ? 'bg-neon' : 'bg-blue'"></div>
+    <div class="absolute top-1/2 left-1/4 w-64 h-64 rounded-full opacity-5 blur-3xl bg-blue"></div>
+  </div>
+
+  <!-- Beta badge — 2 · TAGLINE area -->
+  <div class="relative glow-pulse inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6 border"
+    :class="dark ? 'bg-neon/10 border-neon/30 text-neon' : 'bg-blue/10 border-blue/30 text-blue'">
+    <span class="w-2 h-2 rounded-full animate-pulse" :class="dark ? 'bg-neon' : 'bg-blue'"></span>
+    <span x-text="t('hero.badge')"></span>
+  </div>
+
+  <h1 class="relative text-5xl sm:text-6xl md:text-7xl font-black leading-tight mb-4"
+    :class="dark ? 'text-white' : 'text-gray-900'">
+    <span x-text="t('hero.title1')"></span><br />
+    <span class="neon-text" :class="dark ? 'text-neon' : 'text-blue'"
+      x-text="t('hero.title2')"></span>
+  </h1>
+
+  <p class="relative text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
+    :class="dark ? 'text-gray-300' : 'text-gray-600'"
+    x-text="t('hero.sub')"></p>
+
+  <!-- 3 · CTA principal -->
+  <div class="relative flex flex-col sm:flex-row gap-4 justify-center">
+    <a href="https://github.com/albertolicea00/PocketPlayer" target="_blank"
+      class="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base transition-all neon-btn"
+      :class="dark ? 'bg-neon text-ocean' : 'bg-blue text-white'">
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483
+          0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466
+          -.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832
+          .092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688
+          -.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004
+          1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7
+          1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.92.359.31.678.921.678 1.856 0
+          1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484
+          17.522 2 12 2z"/>
+      </svg>
+      <span x-text="t('hero.cta1')"></span>
+    </a>
+    <a href="#notify"
+      class="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base border transition-all"
+      :class="dark ? 'border-neon/40 text-neon hover:bg-neon/10' : 'border-blue/40 text-blue hover:bg-blue/5'">
+      🔔 <span x-text="t('hero.cta2')"></span>
+    </a>
+  </div>
+
+  <!-- Scroll hint -->
+  <div class="relative mt-16 flex flex-col items-center gap-2 animate-bounce"
+    :class="dark ? 'text-gray-500' : 'text-gray-400'">
+    <span class="text-xs" x-text="t('hero.scroll')"></span>
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     4 · APP PREVIEW
+══════════════════════════════════════ -->
+<section id="preview" class="py-20 px-4">
+  <div class="max-w-5xl mx-auto text-center">
+    <p class="text-xs font-semibold tracking-widest uppercase mb-3"
+      :class="dark ? 'text-neon' : 'text-blue'"
+      x-text="t('preview.tag')"></p>
+    <h2 class="text-3xl sm:text-4xl font-black mb-4" x-text="t('preview.title')"></h2>
+    <p class="text-base max-w-xl mx-auto mb-14"
+      :class="dark ? 'text-gray-400' : 'text-gray-500'"
+      x-text="t('preview.sub')"></p>
+
+    <div class="flex flex-col md:flex-row items-center justify-center gap-10">
+
+      <!-- iPhone mockup placeholder
+           REEMPLAZAR con: captura del simulador iPhone en Xcode
+           Pantalla: MainView (lista de archivos, botón transferir, indicador storage Watch)
+           Dimensiones: 390×844 px (iPhone 14 Pro) — usar <img src="img/iphone-screen.png"> -->
+      <div class="float-anim flex flex-col items-center gap-3">
+        <div class="w-48 h-96 rounded-[2.5rem] border-4 flex flex-col overflow-hidden"
+          :class="dark
+            ? 'border-neon/50 bg-deep neon-border'
+            : 'border-[#1567A8]/60 bg-white shadow-[0_0_0_1px_#1567A844,0_4px_24px_#1567A833]'">
+          <div class="flex justify-center pt-3 pb-1">
+            <div class="w-20 h-4 rounded-full" :class="dark ? 'bg-ocean' : 'bg-gray-200'"></div>
+          </div>
+          <div class="flex-1 px-3 py-2 flex flex-col gap-2">
+            <div class="text-xs font-bold text-left" :class="dark ? 'text-neon' : 'text-blue'">Pocket Player</div>
+            <div class="h-1.5 rounded w-full" :class="dark ? 'bg-neon/20' : 'bg-blue/20'"></div>
+            <div class="space-y-1.5 mt-2">
+              <template x-for="f in ['song_01.mp3','podcast.m4a','album.mp3','track.mp3']">
+                <div class="flex items-center justify-between p-1.5 rounded-lg"
+                  :class="dark ? 'bg-white/5' : 'bg-blue/5'">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs">🎵</span>
+                    <div class="w-20 h-2 rounded" :class="dark ? 'bg-gray-600' : 'bg-gray-300'"></div>
+                  </div>
+                  <span class="text-xs" :class="dark ? 'text-neon' : 'text-blue'">↑</span>
+                </div>
+              </template>
+            </div>
+            <div class="mt-auto">
+              <div class="h-2 rounded-full overflow-hidden" :class="dark ? 'bg-white/10' : 'bg-blue/10'">
+                <div class="h-full w-3/5 rounded-full" :class="dark ? 'bg-neon' : 'bg-blue'"></div>
+              </div>
+              <div class="text-xs mt-1 text-right" :class="dark ? 'text-gray-500' : 'text-gray-400'">Watch: 3.2 GB free</div>
+            </div>
+          </div>
+          <div class="flex justify-center pb-3">
+            <div class="w-16 h-1 rounded-full" :class="dark ? 'bg-gray-600' : 'bg-gray-300'"></div>
+          </div>
+        </div>
+        <span class="text-xs font-medium" :class="dark ? 'text-gray-400' : 'text-gray-500'"
+          x-text="t('preview.iphone')"></span>
+      </div>
+
+      <!-- Transfer arrow -->
+      <div class="text-4xl" :class="dark ? 'text-neon neon-text' : 'text-blue'">
+        <span class="hidden md:block">→</span>
+        <span class="block md:hidden">↓</span>
+      </div>
+
+      <!-- Apple Watch mockup placeholder
+           REEMPLAZAR con: captura del simulador Apple Watch en Xcode
+           Pantalla: LibraryView (lista canciones) + PlayerView (controles)
+           Dimensiones: 198×242 px (Series 7/8/9 45mm) — usar <img src="img/watch-screen.png"> -->
+      <div class="float-anim flex flex-col items-center gap-3" style="animation-delay:1s">
+        <div class="w-36 h-44 rounded-[1.8rem] border-4 flex flex-col overflow-hidden relative"
+          :class="dark
+            ? 'border-neon/50 bg-black neon-border'
+            : 'border-[#1567A8]/70 bg-[#002641] shadow-[0_0_0_1px_#1567A844,0_4px_24px_#1567A833]'">
+          <div class="absolute -right-2.5 top-8 w-2 h-8 rounded-full"
+            :class="dark ? 'bg-gray-600' : 'bg-gray-500'"></div>
+          <div class="flex-1 px-2.5 py-2 flex flex-col gap-1.5">
+            <div class="text-xs font-bold text-center text-white">Library</div>
+            <div class="space-y-1">
+              <template x-for="s in ['Song One','My Podcast','Album Track']">
+                <div class="flex items-center gap-1 p-1 rounded bg-white/10">
+                  <span class="text-xs text-white">▶</span>
+                  <div class="flex-1 h-2 rounded" style="background:#1567A888"></div>
+                </div>
+              </template>
+            </div>
+            <div class="mt-auto">
+              <div class="h-1.5 rounded-full overflow-hidden bg-white/20">
+                <div class="h-full w-2/5 rounded-full" style="background:#B2F4FF"></div>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-center pb-2">
+            <div class="w-10 h-0.5 rounded-full bg-white/20"></div>
+          </div>
+        </div>
+        <span class="text-xs font-medium" :class="dark ? 'text-gray-400' : 'text-gray-500'"
+          x-text="t('preview.watch')"></span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="max-w-5xl mx-auto" :class="dark ? 'divider-neon' : 'divider-light'"></div>
+
+<!-- ══════════════════════════════════════
+     5 · FEATURES
+══════════════════════════════════════ -->
+<section id="features" class="py-20 px-4">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-14">
+      <p class="text-xs font-semibold tracking-widest uppercase mb-3"
+        :class="dark ? 'text-neon' : 'text-blue'" x-text="t('features.tag')"></p>
+      <h2 class="text-3xl sm:text-4xl font-black mb-4" x-text="t('features.title')"></h2>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <template x-for="f in features" :key="f.t">
+        <div class="rounded-2xl p-6 border transition-all"
+          :class="dark
+            ? 'neon-card bg-deep/60 border-blue/20 hover:border-neon/40'
+            : 'light-card bg-white border-[#1567A8]/20 hover:border-[#1567A8]/50'">
+          <div class="text-3xl mb-4" x-text="f.icon"></div>
+          <h3 class="font-bold text-base mb-2" x-text="f.t"></h3>
+          <p class="text-sm leading-relaxed" :class="dark ? 'text-gray-400' : 'text-gray-500'" x-text="f.d"></p>
+        </div>
+      </template>
+    </div>
+  </div>
+</section>
+
+<div class="max-w-5xl mx-auto" :class="dark ? 'divider-neon' : 'divider-light'"></div>
+
+<!-- ══════════════════════════════════════
+     6 · WHAT YOU CAN DO
+══════════════════════════════════════ -->
+<section id="whatyoucando" class="py-20 px-4">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-14">
+      <p class="text-xs font-semibold tracking-widest uppercase mb-3"
+        :class="dark ? 'text-neon' : 'text-blue'" x-text="t('cando.tag')"></p>
+      <h2 class="text-3xl sm:text-4xl font-black mb-4" x-text="t('cando.title')"></h2>
+      <p class="text-base max-w-xl mx-auto" :class="dark ? 'text-gray-400' : 'text-gray-500'"
+        x-text="t('cando.sub')"></p>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
+      <template x-for="item in t('cando.items')" :key="item">
+        <div class="flex items-start gap-3 p-4 rounded-xl border"
+          :class="dark ? 'border-neon/15 bg-deep/40' : 'border-blue/15 bg-white'">
+          <span class="font-bold mt-0.5" :class="dark ? 'text-neon' : 'text-blue'">✓</span>
+          <span class="text-sm" x-text="item"></span>
+        </div>
+      </template>
+    </div>
+  </div>
+</section>
+
+<div class="max-w-5xl mx-auto" :class="dark ? 'divider-neon' : 'divider-light'"></div>
+
+<!-- ══════════════════════════════════════
+     7 · HOW IT WORKS
+══════════════════════════════════════ -->
+<section id="howto" class="py-20 px-4">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-14">
+      <p class="text-xs font-semibold tracking-widest uppercase mb-3"
+        :class="dark ? 'text-neon' : 'text-blue'" x-text="t('how.tag')"></p>
+      <h2 class="text-3xl sm:text-4xl font-black mb-4" x-text="t('how.title')"></h2>
+    </div>
+    <div class="space-y-6">
+      <template x-for="(step, i) in t('how.steps')" :key="i">
+        <div class="flex gap-5 items-start">
+          <div class="shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-black text-sm neon-border"
+            :class="dark ? 'bg-neon/15 text-neon border border-neon/30' : 'bg-blue/10 text-blue border border-blue/30'"
+            x-text="i + 1"></div>
+          <div class="pt-1.5">
+            <h3 class="font-bold mb-1" x-text="step.t"></h3>
+            <p class="text-sm" :class="dark ? 'text-gray-400' : 'text-gray-500'" x-text="step.d"></p>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+</section>
+
+<div class="max-w-5xl mx-auto" :class="dark ? 'divider-neon' : 'divider-light'"></div>
+
+<!-- ══════════════════════════════════════
+     USER MANUAL
+══════════════════════════════════════ -->
+<section id="manual" class="py-20 px-4">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-14">
+      <p class="text-xs font-semibold tracking-widest uppercase mb-3"
+        :class="dark ? 'text-neon' : 'text-blue'" x-text="t('manual.tag')"></p>
+      <h2 class="text-3xl sm:text-4xl font-black mb-4" x-text="t('manual.title')"></h2>
+      <p class="text-base max-w-xl mx-auto" :class="dark ? 'text-gray-400' : 'text-gray-500'"
+        x-text="t('manual.sub')"></p>
+    </div>
+
+    <!-- Accordion — uses local state via x-data on each item -->
+    <div class="space-y-4">
+      <template x-for="section in manualSections" :key="section.title">
+        <div class="rounded-2xl border overflow-hidden"
+          :class="dark ? 'border-blue/20 bg-deep/40' : 'border-blue/15 bg-white'">
+          <button @click="section.open = !section.open"
+            class="w-full flex items-center justify-between p-5 text-left font-semibold text-sm transition-colors"
+            :class="dark ? 'hover:bg-neon/5' : 'hover:bg-blue/5'">
+            <span class="flex items-center gap-3">
+              <span x-text="section.icon" class="text-xl"></span>
+              <span x-text="section.title"></span>
+            </span>
+            <svg class="w-4 h-4 transition-transform" :class="section.open ? 'rotate-180' : ''"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div x-show="section.open"
+            class="border-t px-5 pb-5 pt-4 text-sm space-y-3"
+            :class="dark ? 'border-blue/20 text-gray-300' : 'border-blue/10 text-gray-600'">
+            <template x-for="(step, j) in section.steps" :key="j">
+              <div class="flex gap-3">
+                <span class="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
+                  :class="dark ? 'bg-neon/15 text-neon' : 'bg-blue/10 text-blue'"
+                  x-text="j + 1"></span>
+                <p x-text="step"></p>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+</section>
+
+<div class="max-w-5xl mx-auto" :class="dark ? 'divider-neon' : 'divider-light'"></div>
+
+<!-- ══════════════════════════════════════
+     8 · PRIVACY
+══════════════════════════════════════ -->
+<section id="privacy" class="py-20 px-4">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-14">
+      <p class="text-xs font-semibold tracking-widest uppercase mb-3"
+        :class="dark ? 'text-neon' : 'text-blue'" x-text="t('privacy.tag')"></p>
+      <h2 class="text-3xl sm:text-4xl font-black mb-4" x-text="t('privacy.title')"></h2>
+    </div>
+    <div class="grid sm:grid-cols-3 gap-6">
+      <template x-for="p in t('privacy.items')" :key="p.t">
+        <div class="text-center p-6 rounded-2xl border"
+          :class="dark ? 'border-neon/15 bg-deep/40' : 'border-blue/15 bg-white'">
+          <div class="text-4xl mb-4" x-text="p.icon"></div>
+          <h3 class="font-bold mb-2" x-text="p.t"></h3>
+          <p class="text-sm" :class="dark ? 'text-gray-400' : 'text-gray-500'" x-text="p.d"></p>
+        </div>
+      </template>
+    </div>
+  </div>
+</section>
+
+<div class="max-w-5xl mx-auto" :class="dark ? 'divider-neon' : 'divider-light'"></div>
+
+<!-- ══════════════════════════════════════
+     9 · COMPATIBILITY
+══════════════════════════════════════ -->
+<section id="compatibility" class="py-20 px-4">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-14">
+      <p class="text-xs font-semibold tracking-widest uppercase mb-3"
+        :class="dark ? 'text-neon' : 'text-blue'" x-text="t('compat.tag')"></p>
+      <h2 class="text-3xl sm:text-4xl font-black mb-4" x-text="t('compat.title')"></h2>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-6">
+      <div class="p-6 rounded-2xl border" :class="dark ? 'border-neon/15 bg-deep/40' : 'border-blue/15 bg-white'">
+        <h3 class="font-bold mb-4 flex items-center gap-2">
+          <span>🎵</span> <span x-text="t('compat.formats')"></span>
+        </h3>
+        <div class="flex flex-wrap gap-2">
+          <template x-for="fmt in ['MP3', 'M4A', 'AAC', 'WAV*', 'FLAC*']">
+            <span class="px-3 py-1 rounded-full text-xs font-semibold border"
+              :class="dark ? 'border-neon/30 text-neon bg-neon/10' : 'border-blue/30 text-blue bg-blue/10'"
+              x-text="fmt"></span>
+          </template>
+        </div>
+        <p class="text-xs mt-3" :class="dark ? 'text-gray-500' : 'text-gray-400'"
+          x-text="t('compat.formatsNote')"></p>
+      </div>
+      <div class="p-6 rounded-2xl border" :class="dark ? 'border-neon/15 bg-deep/40' : 'border-blue/15 bg-white'">
+        <h3 class="font-bold mb-4 flex items-center gap-2">
+          <span>📱</span> <span x-text="t('compat.os')"></span>
+        </h3>
+        <div class="space-y-2 text-sm">
+          <template x-for="req in [
+            { label:'watchOS',      value:'7.0+' },
+            { label:'iOS',          value:'15.0+' },
+            { label:'iPhone',       value:'iPhone 8+' },
+            { label:'Apple Watch',  value:'Series 4+' },
+            { label:'Xcode',        value:'15+' },
+          ]" :key="req.label">
+            <div class="flex justify-between items-center">
+              <span :class="dark ? 'text-gray-300' : 'text-gray-600'" x-text="req.label"></span>
+              <span class="font-semibold" :class="dark ? 'text-neon' : 'text-blue'" x-text="req.value"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="max-w-5xl mx-auto" :class="dark ? 'divider-neon' : 'divider-light'"></div>
+
+<!-- ══════════════════════════════════════
+     10 · ADVANTAGES
+══════════════════════════════════════ -->
+<section id="advantages" class="py-20 px-4">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-14">
+      <p class="text-xs font-semibold tracking-widest uppercase mb-3"
+        :class="dark ? 'text-neon' : 'text-blue'" x-text="t('adv.tag')"></p>
+      <h2 class="text-3xl sm:text-4xl font-black mb-4" x-text="t('adv.title')"></h2>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr>
+            <th class="text-left p-4 rounded-tl-xl"
+              :class="dark ? 'bg-deep' : 'bg-blue/5'"
+              x-text="t('adv.feature')"></th>
+            <th class="p-4 text-center"
+              :class="dark ? 'bg-neon/10 text-neon' : 'bg-blue text-white'">PocketPlayer</th>
+            <th class="p-4 text-center"
+              :class="dark ? 'bg-deep text-gray-400' : 'bg-blue/5 text-gray-500'">Spotify</th>
+            <th class="p-4 text-center rounded-tr-xl"
+              :class="dark ? 'bg-deep text-gray-400' : 'bg-blue/5 text-gray-500'">Apple Music</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(row, i) in t('adv.rows')" :key="i">
+            <tr :class="dark ? (i%2===0 ? 'bg-deep/30' : 'bg-deep/10') : (i%2===0 ? 'bg-white' : 'bg-blue/3')">
+              <td class="p-4 font-medium" x-text="row.feature"></td>
+              <td class="p-4 text-center" :class="dark ? 'text-neon' : 'text-blue'" x-text="row.pocket"></td>
+              <td class="p-4 text-center" :class="dark ? 'text-gray-400' : 'text-gray-500'" x-text="row.spotify"></td>
+              <td class="p-4 text-center" :class="dark ? 'text-gray-400' : 'text-gray-500'" x-text="row.apple"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-14">
+      <h3 class="text-xl font-bold text-center mb-8" x-text="t('adv.similar')"></h3>
+      <div class="grid sm:grid-cols-3 gap-4">
+        <template x-for="app in t('similar')" :key="app.name">
+          <a :href="app.url" target="_blank"
+            class="flex items-center gap-3 p-4 rounded-xl border transition-all hover:scale-[1.02]"
+            :class="dark ? 'border-blue/20 bg-deep/40 hover:border-neon/30' : 'border-blue/15 bg-white hover:border-blue/40'">
+            <span class="text-2xl" x-text="app.icon"></span>
+            <div>
+              <div class="font-semibold text-sm" x-text="app.name"></div>
+              <div class="text-xs" :class="dark ? 'text-gray-400' : 'text-gray-500'" x-text="app.desc"></div>
+            </div>
+          </a>
+        </template>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="max-w-5xl mx-auto" :class="dark ? 'divider-neon' : 'divider-light'"></div>
+
+<!-- ══════════════════════════════════════
+     11 · FAQ
+══════════════════════════════════════ -->
+<section id="faq" class="py-20 px-4">
+  <div class="max-w-3xl mx-auto">
+    <div class="text-center mb-14">
+      <p class="text-xs font-semibold tracking-widest uppercase mb-3"
+        :class="dark ? 'text-neon' : 'text-blue'" x-text="t('faq.tag')"></p>
+      <h2 class="text-3xl sm:text-4xl font-black mb-4" x-text="t('faq.title')"></h2>
+    </div>
+    <div class="space-y-3">
+      <template x-for="item in faqItems" :key="item.q">
+        <div class="rounded-2xl border overflow-hidden"
+          :class="dark ? 'border-blue/20 bg-deep/40' : 'border-blue/15 bg-white'">
+          <button @click="item.open = !item.open"
+            class="w-full flex items-center justify-between p-5 text-left font-semibold text-sm transition-colors"
+            :class="dark ? 'hover:bg-neon/5' : 'hover:bg-blue/5'">
+            <span x-text="item.q"></span>
+            <svg class="w-4 h-4 shrink-0 ml-3 transition-transform" :class="item.open ? 'rotate-180' : ''"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div x-show="item.open"
+            class="border-t px-5 pb-5 pt-4 text-sm"
+            :class="dark ? 'border-blue/20 text-gray-300' : 'border-blue/10 text-gray-600'"
+            x-text="item.a"></div>
+        </div>
+      </template>
+    </div>
+  </div>
+</section>
+
+<div class="max-w-5xl mx-auto" :class="dark ? 'divider-neon' : 'divider-light'"></div>
+
+<!-- ══════════════════════════════════════
+     12 · ROADMAP
+══════════════════════════════════════ -->
+<section id="roadmap" class="py-20 px-4">
+  <div class="max-w-3xl mx-auto">
+    <div class="text-center mb-14">
+      <p class="text-xs font-semibold tracking-widest uppercase mb-3"
+        :class="dark ? 'text-neon' : 'text-blue'" x-text="t('road.tag')"></p>
+      <h2 class="text-3xl sm:text-4xl font-black mb-4" x-text="t('road.title')"></h2>
+    </div>
+    <div class="relative">
+      <div class="absolute left-5 top-0 bottom-0 w-px"
+        :class="dark ? 'bg-neon/20' : 'bg-blue/20'"></div>
+      <div class="space-y-8 pl-14">
+        <template x-for="(item, i) in t('road.items')" :key="i">
+          <div class="relative">
+            <div class="absolute -left-9 w-4 h-4 rounded-full border-2 flex items-center justify-center"
+              :class="item.done
+                ? (dark ? 'border-neon bg-neon/20' : 'border-blue bg-blue/20')
+                : (dark ? 'border-gray-600 bg-ocean' : 'border-gray-300 bg-white')">
+              <div class="w-2 h-2 rounded-full" x-show="item.done"
+                :class="dark ? 'bg-neon' : 'bg-blue'"></div>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full mb-2"
+                  :class="item.done
+                    ? (dark ? 'bg-neon/15 text-neon' : 'bg-blue/10 text-blue')
+                    : (dark ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500')"
+                  x-text="item.done ? t('road.done') : t('road.upcoming')"></span>
+                <h3 class="font-bold text-sm" x-text="item.title"></h3>
+                <p class="text-sm mt-1" :class="dark ? 'text-gray-400' : 'text-gray-500'" x-text="item.desc"></p>
+              </div>
+              <span class="text-xs shrink-0 mt-1" :class="dark ? 'text-gray-500' : 'text-gray-400'"
+                x-text="item.period"></span>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="max-w-5xl mx-auto" :class="dark ? 'divider-neon' : 'divider-light'"></div>
+
+<!-- ══════════════════════════════════════
+     NOTIFY / NEWSLETTER / SOCIAL
+══════════════════════════════════════ -->
+<section id="notify" class="py-20 px-4">
+  <div class="max-w-2xl mx-auto text-center">
+
+    <!-- Beta notify -->
+    <div class="p-8 rounded-3xl border mb-10"
+      :class="dark
+        ? 'border-neon/30 bg-deep/60 neon-border'
+        : 'border-[#1567A8]/30 bg-white shadow-[0_0_0_1px_#1567A822,0_4px_20px_#1567A81a]'">
+      <span class="text-4xl block mb-4">🔔</span>
+      <h2 class="text-2xl font-black mb-3" x-text="t('notify.betaTitle')"></h2>
+      <p class="text-sm mb-6" :class="dark ? 'text-gray-400' : 'text-gray-500'"
+        x-text="t('notify.betaSub')"></p>
+      <form @submit.prevent="submitNotify()" class="flex gap-3 max-w-sm mx-auto">
+        <input x-model="notifyEmail" type="email" :placeholder="t('notify.placeholder')" required
+          class="flex-1 px-4 py-3 rounded-xl text-sm border outline-none transition-all"
+          :class="dark
+            ? 'bg-ocean border-neon/30 text-white placeholder-gray-500 focus:border-neon'
+            : 'bg-blue/5 border-blue/30 text-gray-900 placeholder-gray-400 focus:border-blue'" />
+        <button type="submit"
+          class="px-5 py-3 rounded-xl font-bold text-sm transition-all neon-btn"
+          :class="dark ? 'bg-neon text-ocean' : 'bg-blue text-white'"
+          x-text="t('notify.btn')"></button>
+      </form>
+      <p x-show="notifyOk" class="mt-3 text-sm font-semibold"
+        :class="dark ? 'text-neon' : 'text-blue'" x-text="t('notify.ok')"></p>
+    </div>
+
+    <!-- Newsletter -->
+    <div class="p-8 rounded-3xl border mb-10"
+      :class="dark ? 'border-blue/20 bg-deep/40' : 'border-blue/15 bg-white'">
+      <span class="text-4xl block mb-4">📬</span>
+      <h2 class="text-xl font-black mb-3" x-text="t('notify.newsTitle')"></h2>
+      <p class="text-sm mb-6" :class="dark ? 'text-gray-400' : 'text-gray-500'"
+        x-text="t('notify.newsSub')"></p>
+      <form @submit.prevent="submitNewsletter()" class="flex gap-3 max-w-sm mx-auto">
+        <input x-model="newsletterEmail" type="email" :placeholder="t('notify.placeholder')" required
+          class="flex-1 px-4 py-3 rounded-xl text-sm border outline-none transition-all"
+          :class="dark
+            ? 'bg-ocean border-blue/30 text-white placeholder-gray-500 focus:border-neon'
+            : 'bg-blue/5 border-blue/30 text-gray-900 placeholder-gray-400 focus:border-blue'" />
+        <button type="submit"
+          class="px-5 py-3 rounded-xl font-bold text-sm border transition-all"
+          :class="dark ? 'border-neon/40 text-neon hover:bg-neon/10' : 'border-blue/40 text-blue hover:bg-blue/10'"
+          x-text="t('notify.btn')"></button>
+      </form>
+      <p x-show="newsletterOk" class="mt-3 text-sm font-semibold"
+        :class="dark ? 'text-neon' : 'text-blue'" x-text="t('notify.ok')"></p>
+    </div>
+
+    <!-- Social links -->
+    <h3 class="text-xl font-bold mb-6" x-text="t('social.title')"></h3>
+    <div class="flex flex-wrap justify-center gap-4">
+      <!-- Telegram -->
+      <a href="https://t.me/pocketplayerapp" target="_blank"
+        class="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm border transition-all"
+        :class="dark ? 'border-neon/30 text-neon hover:bg-neon/10' : 'border-blue/30 text-blue hover:bg-blue/10'">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M11.944 0A12 12 0 1 0 24 12 12.017 12.017 0 0 0 11.944 0zm5.822 8.198-2.023 9.527
+            c-.15.681-.547.847-1.107.527l-3.045-2.243-1.47 1.414a.767.767 0 0 1-.614.3l.219-3.119
+            5.668-5.119c.246-.219-.054-.34-.381-.121L7.1 14.226l-3.026-.944c-.657-.207-.671-.657.14-.972
+            l11.82-4.558c.547-.198 1.025.134.732.446z"/>
+        </svg>
+        Telegram
+      </a>
+      <!-- GitHub -->
+      <a href="https://github.com/albertolicea00/PocketPlayer" target="_blank"
+        class="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm border transition-all"
+        :class="dark ? 'border-neon/30 text-neon hover:bg-neon/10' : 'border-blue/30 text-blue hover:bg-blue/10'">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483
+            0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466
+            -.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832
+            .092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688
+            -.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004
+            1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7
+            1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.92.359.31.678.921.678 1.856 0
+            1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484
+            17.522 2 12 2z"/>
+        </svg>
+        GitHub
+      </a>
+      <!-- X / Twitter -->
+      <a href="https://twitter.com/pocketplayerapp" target="_blank"
+        class="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm border transition-all"
+        :class="dark ? 'border-neon/30 text-neon hover:bg-neon/10' : 'border-blue/30 text-blue hover:bg-blue/10'">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744
+            l7.73-8.835L1.254 2.25H8.08l4.261 5.635zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+        X / Twitter
+      </a>
+      <!-- Reddit -->
+      <a href="https://reddit.com/r/pocketplayer" target="_blank"
+        class="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm border transition-all"
+        :class="dark ? 'border-neon/30 text-neon hover:bg-neon/10' : 'border-blue/30 text-blue hover:bg-blue/10'">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01
+            4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07
+            3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435
+            1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176
+            -7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754
+            .463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1
+            .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8
+            12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249
+            -1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0
+            1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33
+            0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0
+            .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326
+            0 0 0-.232-.095z"/>
+        </svg>
+        Reddit
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="max-w-5xl mx-auto" :class="dark ? 'divider-neon' : 'divider-light'"></div>
+
+<!-- ══════════════════════════════════════
+     13 · FINAL CTA
+══════════════════════════════════════ -->
+<section class="py-24 px-4 text-center">
+  <div class="max-w-2xl mx-auto">
+    <h2 class="text-4xl sm:text-5xl font-black mb-4"
+      :class="dark ? 'text-white' : 'text-gray-900'"
+      x-text="t('cta2.title')"></h2>
+    <p class="text-base mb-10" :class="dark ? 'text-gray-400' : 'text-gray-500'"
+      x-text="t('cta2.sub')"></p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="https://github.com/albertolicea00/PocketPlayer" target="_blank"
+        class="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base transition-all neon-btn"
+        :class="dark ? 'bg-neon text-ocean' : 'bg-blue text-white'">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483
+            0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466
+            -.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832
+            .092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688
+            -.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004
+            1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7
+            1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.92.359.31.678.921.678 1.856 0
+            1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484
+            17.522 2 12 2z"/>
+        </svg>
+        <span x-text="t('hero.cta1')"></span>
+      </a>
+      <a href="#notify"
+        class="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base border transition-all"
+        :class="dark ? 'border-neon/40 text-neon hover:bg-neon/10' : 'border-blue/40 text-blue hover:bg-blue/5'">
+        🔔 <span x-text="t('hero.cta2')"></span>
+      </a>
+    </div>
+    <p class="mt-6 text-xs" :class="dark ? 'text-gray-600' : 'text-gray-400'"
+      x-text="t('cta2.note')"></p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     14 · FOOTER
+══════════════════════════════════════ -->
+<footer class="border-t py-12 px-4"
+  :class="dark ? 'border-blue/20 bg-ocean' : 'border-[#1567A8]/15 bg-[#f7fbff]'">
+  <div class="max-w-5xl mx-auto">
+    <div class="grid sm:grid-cols-4 gap-8 mb-10">
+      <!-- Brand -->
+      <div class="sm:col-span-2">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm"
+            :class="dark ? 'bg-neon/10 text-neon' : 'bg-blue text-white'">▶</span>
+          <span class="font-bold" :class="dark ? 'text-neon' : 'text-blue'">PocketPlayer</span>
+        </div>
+        <p class="text-xs leading-relaxed max-w-xs"
+          :class="dark ? 'text-gray-400' : 'text-gray-500'"
+          x-text="t('footer.desc')"></p>
+        <p class="text-xs mt-3" :class="dark ? 'text-gray-600' : 'text-gray-400'">MIT License · Open Source</p>
+      </div>
+      <!-- Nav links -->
+      <div>
+        <h4 class="font-semibold text-xs uppercase tracking-widest mb-4"
+          :class="dark ? 'text-gray-400' : 'text-gray-500'" x-text="t('footer.nav')"></h4>
+        <div class="space-y-2 text-sm">
+          <a href="#features" class="block transition-colors"
+            :class="dark ? 'text-gray-400 hover:text-neon' : 'text-gray-600 hover:text-[#1567A8]'" x-text="t('nav.features')"></a>
+          <a href="#manual" class="block transition-colors"
+            :class="dark ? 'text-gray-400 hover:text-neon' : 'text-gray-600 hover:text-[#1567A8]'" x-text="t('nav.manual')"></a>
+          <a href="#faq" class="block transition-colors"
+            :class="dark ? 'text-gray-400 hover:text-neon' : 'text-gray-600 hover:text-[#1567A8]'" x-text="t('nav.faq')"></a>
+          <a href="#roadmap" class="block transition-colors"
+            :class="dark ? 'text-gray-400 hover:text-neon' : 'text-gray-600 hover:text-[#1567A8]'" x-text="t('nav.roadmap')"></a>
+        </div>
+      </div>
+      <!-- Legal -->
+      <div>
+        <h4 class="font-semibold text-xs uppercase tracking-widest mb-4"
+          :class="dark ? 'text-gray-400' : 'text-gray-500'" x-text="t('footer.legal')"></h4>
+        <div class="space-y-2 text-sm">
+          <a href="https://github.com/albertolicea00/PocketPlayer/blob/main/LICENSE" target="_blank"
+            class="block transition-colors"
+            :class="dark ? 'text-gray-400 hover:text-neon' : 'text-gray-600 hover:text-[#1567A8]'">MIT License</a>
+          <a href="https://github.com/albertolicea00/PocketPlayer/blob/main/CONTRIBUTING.md" target="_blank"
+            class="block transition-colors"
+            :class="dark ? 'text-gray-400 hover:text-neon' : 'text-gray-600 hover:text-[#1567A8]'">Contributing</a>
+          <a href="mailto:Alberto.Licea@pinkzebrahome.com"
+            class="block transition-colors"
+            :class="dark ? 'text-gray-400 hover:text-neon' : 'text-gray-600 hover:text-[#1567A8]'" x-text="t('footer.contact')"></a>
+          <a href="https://github.com/albertolicea00/PocketPlayer/issues" target="_blank"
+            class="block transition-colors"
+            :class="dark ? 'text-gray-400 hover:text-neon' : 'text-gray-600 hover:text-[#1567A8]'" x-text="t('footer.issues')"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs"
+      :class="dark ? 'border-blue/20 text-gray-600' : 'border-blue/10 text-gray-400'">
+      <span x-text="'© ' + year + ' PocketPlayer. ' + t('footer.copy')"></span>
+      <span>Made with ❤️ for Apple Watch runners</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

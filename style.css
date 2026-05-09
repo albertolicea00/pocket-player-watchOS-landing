@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ── CSS variables ─────────────────────────────────── */
+:root {
+  --neon:  #B2F4FF;
+  --ocean: #00182F;
+  --blue:  #1567A8;
+  --deep:  #002641;
+}
+
+/* ── Neon effects (dark mode only) ─────────────────── */
+.neon-text   { text-shadow: 0 0 8px var(--neon), 0 0 24px #B2F4FF55; }
+.neon-border { box-shadow:  0 0 0 1px var(--neon), 0 0 12px #B2F4FF44; }
+
+.neon-btn {
+  box-shadow: 0 0 12px #B2F4FF88, 0 0 32px #B2F4FF33;
+  transition: box-shadow .3s;
+}
+.neon-btn:hover {
+  box-shadow: 0 0 20px var(--neon), 0 0 48px #B2F4FF55;
+}
+
+/* Light-mode btn: clean blue shadow, no glow */
+.blue-btn {
+  box-shadow: 0 2px 8px #1567A844, 0 1px 3px #1567A822;
+  transition: box-shadow .3s;
+}
+.blue-btn:hover {
+  box-shadow: 0 4px 16px #1567A866, 0 2px 6px #1567A833;
+}
+
+.neon-card {
+  box-shadow: 0 0 0 1px #1567A844, 0 0 24px #1567A822;
+  transition: box-shadow .3s;
+}
+.neon-card:hover {
+  box-shadow: 0 0 0 1px #B2F4FF66, 0 0 32px #B2F4FF33;
+}
+
+/* ── Hero gradients ────────────────────────────────── */
+.bg-hero-dark {
+  background: radial-gradient(ellipse 80% 60% at 50% 0%,
+    #1567A833 0%, var(--ocean) 60%, var(--ocean) 100%);
+}
+.bg-hero-light {
+  background: radial-gradient(ellipse 80% 60% at 50% 0%,
+    #1567A814 0%, #ffffff 60%, #ffffff 100%);
+}
+
+/* ── Light mode — clean card borders ───────────────── */
+.light-card {
+  box-shadow: 0 1px 4px #1567A81a, 0 0 0 1px #1567A81a;
+  transition: box-shadow .3s;
+}
+.light-card:hover {
+  box-shadow: 0 4px 12px #1567A833, 0 0 0 1px #1567A844;
+}
+
+/* ── Animations ────────────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-12px); }
+}
+.float-anim { animation: float 6s ease-in-out infinite; }
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px color-mix(in srgb, var(--neon) 53%, transparent),
+                0 0 20px color-mix(in srgb, var(--neon) 20%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 16px var(--neon),
+                0 0 40px color-mix(in srgb, var(--neon) 40%, transparent);
+  }
+}
+.glow-pulse { animation: glowPulse 2.5s ease-in-out infinite; }
+
+/* ── Section divider ───────────────────────────────── */
+.divider-neon {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    color-mix(in srgb, var(--neon) 33%, transparent),
+    transparent);
+}
+
+/* ── Divider light mode ────────────────────────────── */
+.divider-light {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #1567A833, transparent);
+}
+
+/* ── Scrollbar ─────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: var(--ocean); }
+::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 3px; }
+
+/* ── Alpine cloak ──────────────────────────────────── */
+[x-cloak] { display: none !important; }

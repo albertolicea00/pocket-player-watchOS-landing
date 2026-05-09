@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor directories
+.vscode/
+.idea/
+
+# Node (if you add a build step later)
+node_modules/
+dist/
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+Thumbs.db

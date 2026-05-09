@@ -9,15 +9,24 @@
   <meta property="og:description" content="Reproduce tu música directamente desde el Apple Watch, sin iPhone. Transfiere canciones desde iCloud o el iPhone con un toque." />
   <meta property="og:type"        content="website" />
 
-  <!-- Tailwind config MUST be inline, before the CDN script -->
+  <!-- Tailwind CDN — config must be defined on window.tailwind BEFORE the script loads -->
   <script>
-    tailwind = { config: {
-      darkMode: 'class',
-      theme: { extend: {
-        colors: { neon: '#B2F4FF', ocean: '#00182F', blue: '#1567A8', deep: '#002641' },
-        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-      }},
-    }}
+    window.tailwind = {
+      config: {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              neon:  '#B2F4FF',
+              ocean: '#00182F',
+              blue:  '#1567A8',
+              deep:  '#002641',
+            },
+            fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          },
+        },
+      },
+    }
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
 
